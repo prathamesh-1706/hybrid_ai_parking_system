@@ -1,0 +1,20 @@
+name: hybrid-ai-parking
+description: AI-powered parking system using reinforcement learning
+
+endpoints:
+  reset: /reset
+  step: /step
+  state: /state
+
+tasks:
+  - name: spot_assignment
+    description: Assign a vehicle to an optimal parking slot
+    max_steps: 10
+
+  - name: queue_management
+    description: Handle multiple vehicle arrivals efficiently
+    max_steps: 30
+
+  - name: dynamic_pricing
+    description: Optimize parking usage and revenue
+    max_steps: 50
