@@ -2,7 +2,6 @@ import requests
 import time
 import json
 
-# 🔹 Change this AFTER deployment (for now keep local)
 BASE_URL = "https://pixelpirates1-hybrid-ai-parking.hf.space"
 
 def run_episode():
