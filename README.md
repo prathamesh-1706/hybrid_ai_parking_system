@@ -1,8 +1,8 @@
 ---
 title: Hybrid AI Parking System
 emoji: 🚗
-colorFrom: #4CAF50   # green
-colorTo: #2196F3     # blue
+colorFrom: green
+colorTo: blue
 sdk: gradio
 sdk_version: "3.38"
 python_version: "3.10"
