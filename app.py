@@ -50,7 +50,7 @@ def visualize_grid(grid, action=None):
 
     ax.set_xticks(range(env.size))
     ax.set_yticks(range(env.size))
-    ax.set_title("Parking Lot (🟩=Empty, 🟥=Occupied)", fontsize=14)
+    ax.set_title("Parking Lot (Green=Empty, Red=Occupied)", fontsize=14)
 
     plt.colorbar(im, ax=ax, label="0=Empty, 1=Occupied")
     plt.tight_layout()
@@ -137,4 +137,4 @@ with gr.Blocks(title="🚗 AI Parking System") as demo:
 
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
+    demo.launch(server_name="0.0.0.0", server_port=7860)
