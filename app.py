@@ -41,8 +41,9 @@ def visualize_grid(grid, action=None):
     plt.colorbar(im, ax=ax)
     plt.tight_layout()
 
-    return fig
+    plt.close(fig)   # ✅ ADD THIS LINE
 
+    return fig
 
 def step_fn():
     global state
