@@ -11,8 +11,8 @@ def fig_to_image(fig):
     buf = io.BytesIO()
     fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
     buf.seek(0)
-    img = Image.open(buf)
-    return img
+    img = Image.open(buf).convert("RGB")  # ✅ IMPORTANT
+    return np.array(img)  # ✅ RETURN NUMPY ARRAY
 
 from agent.dqn import DQN
 from env.parking_env import ParkingEnv
@@ -118,7 +118,7 @@ with gr.Blocks(title="🚗 AI Parking System") as demo:
             step_btn = gr.Button("▶️ Next Step", size="lg", variant="primary")
         
         with gr.Column(scale=2):
-            plot_output = gr.Image(label="Parking Visualization")
+           plot_output = gr.Image(type="numpy")  # ✅ FORCE REFRESH
 
     info_output = gr.Markdown(label="Information")
 
