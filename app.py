@@ -4,6 +4,15 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")  # ✅ FIX for HF (no GUI backend)
 import matplotlib.pyplot as plt
+import io
+from PIL import Image
+
+def fig_to_image(fig):
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png')
+    buf.seek(0)
+    img = Image.open(buf)
+    return img
 
 from agent.dqn import DQN
 from env.parking_env import ParkingEnv
@@ -68,7 +77,9 @@ def step_fn():
     """
 
     fig = visualize_grid(state, action)
-    return fig, info
+    img = fig_to_image(fig)   # ✅ inside function
+
+    return img, info
 
 
 def reset_fn():
@@ -76,7 +87,9 @@ def reset_fn():
     state, _ = env.reset()
 
     fig = visualize_grid(state)
-    return fig, "🔄 Environment Reset"
+    img = fig_to_image(fig)   # ✅ inside function
+
+    return img, "🔄 Environment Reset"
 
 
 # UI
@@ -87,7 +100,7 @@ with gr.Blocks() as demo:
         reset_btn = gr.Button("Reset")
         step_btn = gr.Button("Next Step")
 
-    plot_output = gr.Plot()
+    plot_output = gr.Image()
     info_output = gr.Markdown()
 
     reset_btn.click(reset_fn, outputs=[plot_output, info_output])
