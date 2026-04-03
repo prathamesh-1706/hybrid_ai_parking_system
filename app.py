@@ -65,8 +65,24 @@ def step_fn():
         return None, "❌ Model not loaded"
 
     state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
-    action = torch.argmax(model(state_tensor)).item()
 
+    # ✅ Get Q-values from model
+    q_values = model(state_tensor).detach().numpy().flatten()
+
+    # ✅ Mask invalid actions (occupied slots)
+    valid_actions = (state == 0)  # 0 = empty
+    masked_q = np.where(valid_actions, q_values, -1e9)
+
+    # ✅ Select best valid action
+    action = np.argmax(masked_q)
+
+    # 🚨 Edge case: no empty slots
+    if not valid_actions.any():
+        fig = visualize_grid(state)
+        img = fig_to_image(fig)
+        return img, "🚫 No available parking slots!"
+
+    # Step environment
     next_state, reward, done, _, _ = env.step(action)
     state = next_state
     episode_reward += reward
@@ -75,15 +91,14 @@ def step_fn():
     row = action // env.size
     col = action % env.size
 
-    # Status indicator
     status = "✅ Success!" if reward > 5 else "⚠️ Occupied or Penalty"
 
     info = f"""
-    ### Last Action
+    ### 🤖 AI Decision
     - **Selected Slot**: {action} (Row: {row}, Col: {col})
     - **Reward**: {reward:.2f}
     - **Status**: {status}
-    - **Episode Reward**: {episode_reward:.2f}
+    - **Total Reward**: {episode_reward:.2f}
     - **Steps**: {episode_steps}
     - **Done**: {"🏁 Yes" if done else "▶️ No"}
     """
