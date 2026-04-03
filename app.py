@@ -77,9 +77,9 @@ def step_fn():
     """
 
     fig = visualize_grid(state, action)
-    img = fig_to_image(fig)   # ✅ inside function
+    img = fig_to_image(fig)   # ✅ MUST be inside
 
-    return img, info
+    return img, info          # ✅ MUST be inside
 
 
 def reset_fn():
@@ -87,7 +87,7 @@ def reset_fn():
     state, _ = env.reset()
 
     fig = visualize_grid(state)
-    img = fig_to_image(fig)   # ✅ inside function
+    img = fig_to_image(fig)   # ✅ MUST be inside
 
     return img, "🔄 Environment Reset"
 
