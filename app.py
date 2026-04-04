@@ -62,7 +62,6 @@ def step_fn():
         if model is None:
             return None, "❌ Model not loaded"
 
-        # ✅ FIXED indentation + flatten
         state_tensor = torch.tensor(state.flatten(), dtype=torch.float32).unsqueeze(0)
 
         with torch.no_grad():
@@ -77,7 +76,6 @@ def step_fn():
         masked_q = np.where(valid_actions, q_values, -1e9)
         action = int(np.argmax(masked_q))
 
-        # Safe env step
         step_output = env.step(action)
 
         if len(step_output) == 5:
@@ -93,13 +91,19 @@ def step_fn():
         col = action % env.size
 
         status = "✅ Success!" if reward > 5 else "⚠️ Penalty"
+        occupancy = np.mean(state) * 100
+
+        if done:
+            state, _ = env.reset()
 
         info = f"""
 ### 🤖 AI Decision
 - Slot: {action} (Row {row}, Col {col})
 - Reward: {reward:.2f}
+- Status: {status}
 - Total Reward: {episode_reward:.2f}
 - Steps: {episode_steps}
+- Parking Usage: {occupancy:.1f}%
 - Done: {done}
 """
 
@@ -124,25 +128,49 @@ def reset_fn():
     return fig_to_image(fig), "🔄 Reset successful"
 
 
+# Auto run function (keep this above UI)
+def auto_run_fn():
+    global state
+
+    img = None
+    info = ""
+
+    for _ in range(5):
+        img, info = step_fn()
+        if img is None:
+            break
+
+    return img, "⚡ Auto-run completed\n\n" + info
+
+
 # UI
 with gr.Blocks() as demo:
-    gr.Markdown("# 🚗 Hybrid AI Parking System")
+    gr.Markdown("# 🚗 Smart AI Parking Optimization System (Deep RL Powered)")
+    gr.Markdown(
+        "This system uses Deep Q-Learning to intelligently assign optimal parking slots, reducing congestion and maximizing efficiency."
+    )
 
     with gr.Row():
+        # LEFT SIDE → Buttons
         with gr.Column():
             reset_btn = gr.Button("🔄 Reset")
             step_btn = gr.Button("▶️ Next Step")
+            auto_btn = gr.Button("⚡ Auto Run")  # ✅ added properly
 
+        # RIGHT SIDE → Output Image
         with gr.Column():
             plot_output = gr.Image(type="numpy")
 
+    # Info text
     info_output = gr.Markdown()
 
+    # Button connections
     reset_btn.click(reset_fn, outputs=[plot_output, info_output])
     step_btn.click(step_fn, outputs=[plot_output, info_output])
+    auto_btn.click(auto_run_fn, outputs=[plot_output, info_output])  # ✅ connect
 
+    # Load initial state
     demo.load(reset_fn, outputs=[plot_output, info_output])
-
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7860)
