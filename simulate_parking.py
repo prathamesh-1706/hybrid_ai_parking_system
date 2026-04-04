@@ -4,6 +4,7 @@ import time
 import random  # if you want random actions
 
 BASE_URL = os.environ.get("PARKING_API_URL", "http://localhost:7860")
+session = requests.Session()
 TIMEOUT = 5  # seconds
 
 # -------------------------------
@@ -19,8 +20,7 @@ def reset_env(session):
     try:
         resp = session.get(f"{BASE_URL}/reset", timeout=TIMEOUT)
         resp.raise_for_status()
-        data = resp.json()
-        state = data.get("state")
+        state = resp.json().get("state")
         if state is None:
             raise ValueError("Missing 'state' in reset response")
         return state
@@ -40,6 +40,15 @@ def step_env(session, action):
     except Exception as e:
         print(f"Error stepping environment: {e}")
         return None, None, True
+
+def print_state(state):
+    print("Parking Lot State:")
+    for row in state:
+        print(" ".join(str(cell) for cell in row))
+    print("-" * 20)
+
+    print("Current State:")
+    print_state(state)
 
 # -------------------------------
 # Main simulation loop
