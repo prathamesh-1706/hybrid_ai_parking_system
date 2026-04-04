@@ -13,13 +13,13 @@ model.eval()
 
 state, _ = env.reset()
 
-@app.post("/reset")
+@app.api_route("/reset", methods=["GET", "POST"])
 def reset():
     global state
     state, _ = env.reset()
     return {"state": state.tolist()}
 
-@app.post("/step")
+@app.api_route("/step", methods=["GET", "POST"])
 def step():
     global state
 
