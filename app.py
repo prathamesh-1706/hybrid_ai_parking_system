@@ -2,17 +2,10 @@ import gradio as gr
 import torch
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")  # ✅ FIX for HF (no GUI backend)
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import io
 from PIL import Image
-
-def fig_to_image(fig):
-    buf = io.BytesIO()
-    fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
-    buf.seek(0)
-    img = Image.open(buf).convert("RGB")  # ✅ IMPORTANT
-    return np.array(img)  # ✅ RETURN NUMPY ARRAY
 
 from agent.dqn import DQN
 from env.parking_env import ParkingEnv
@@ -20,7 +13,7 @@ from env.parking_env import ParkingEnv
 # Initialize
 env = ParkingEnv(size=4)
 
-# ✅ Safe model loading
+# Load model
 try:
     model = DQN(16, env.action_space.n)
     model.load_state_dict(torch.load("agent/model.pth", map_location=torch.device("cpu")))
@@ -35,28 +28,32 @@ episode_reward = 0
 episode_steps = 0
 
 
-def visualize_grid(grid, action=None):
-    """Visualize parking grid with matplotlib"""
-    fig, ax = plt.subplots(figsize=(6, 6))
+def fig_to_image(fig):
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=80, bbox_inches='tight')
+    buf.seek(0)
+    img = Image.open(buf).convert("RGB")
+    plt.close(fig)  # ✅ prevent memory leak
+    return np.array(img)
 
-    im = ax.imshow(grid, cmap="RdYlGn_r", vmin=0, vmax=1)
+
+def visualize_grid(grid, action=None):
+    fig, ax = plt.subplots(figsize=(4, 4))
+
+    ax.imshow(grid, cmap="RdYlGn_r", vmin=0, vmax=1)
 
     if action is not None:
         row = action // env.size
         col = action % env.size
-        circle = plt.Circle((col, row), 0.3, color='blue', fill=False, linewidth=3)
-        ax.add_patch(circle)
-        ax.text(col, row, '✓', ha='center', va='center', color='blue', fontsize=16)
+        ax.add_patch(plt.Circle((col, row), 0.3, color='blue', fill=False, linewidth=2))
+        ax.text(col, row, '✓', ha='center', va='center', color='blue', fontsize=14)
 
     ax.set_xticks(range(env.size))
     ax.set_yticks(range(env.size))
-    ax.set_title("Parking Lot (Green=Empty, Red=Occupied)", fontsize=14)
-
-    plt.colorbar(im, ax=ax, label="0=Empty, 1=Occupied")
-    plt.tight_layout()
-    plt.close(fig)
+    ax.set_title("Parking Lot")
 
     return fig
+
 
 def step_fn():
     global state, episode_reward, episode_steps
@@ -65,7 +62,8 @@ def step_fn():
         if model is None:
             return None, "❌ Model not loaded"
 
-        state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+        # ✅ FIXED indentation + flatten
+        state_tensor = torch.tensor(state.flatten(), dtype=torch.float32).unsqueeze(0)
 
         with torch.no_grad():
             q_values = model(state_tensor).cpu().numpy().flatten()
@@ -74,16 +72,13 @@ def step_fn():
 
         if not valid_actions.any():
             fig = visualize_grid(state)
-            img = fig_to_image(fig)
-            return img, "🚫 No available parking slots!"
+            return fig_to_image(fig), "🚫 No available parking slots!"
 
         masked_q = np.where(valid_actions, q_values, -1e9)
-        action = np.argmax(masked_q)
+        action = int(np.argmax(masked_q))
 
-        # Try both formats safely
+        # Safe env step
         step_output = env.step(action)
-
-        print("STEP OUTPUT:", step_output)  # 👈 DEBUG
 
         if len(step_output) == 5:
             next_state, reward, done, _, _ = step_output
@@ -97,69 +92,56 @@ def step_fn():
         row = action // env.size
         col = action % env.size
 
-        status = "✅ Success!" if reward > 5 else "⚠️ Occupied or Penalty"
+        status = "✅ Success!" if reward > 5 else "⚠️ Penalty"
 
         info = f"""
-        ### 🤖 AI Decision
-        - **Selected Slot**: {action} (Row: {row}, Col: {col})
-        - **Reward**: {reward:.2f}
-        - **Status**: {status}
-        - **Total Reward**: {episode_reward:.2f}
-        - **Steps**: {episode_steps}
-        - **Done**: {"🏁 Yes" if done else "▶️ No"}
-        """
+### 🤖 AI Decision
+- Slot: {action} (Row {row}, Col {col})
+- Reward: {reward:.2f}
+- Total Reward: {episode_reward:.2f}
+- Steps: {episode_steps}
+- Done: {done}
+"""
 
         fig = visualize_grid(state, action)
-        img = fig_to_image(fig)
-
-        return img, info
+        return fig_to_image(fig), info
 
     except Exception as e:
         import traceback
         error_msg = traceback.format_exc()
-        print(error_msg)  # 👈 goes to HF logs
+        print(error_msg)
         return None, f"❌ ERROR:\n```\n{error_msg}\n```"
+
 
 def reset_fn():
     global state, episode_reward, episode_steps
+
     state, _ = env.reset()
     episode_reward = 0
     episode_steps = 0
 
     fig = visualize_grid(state)
-    img = fig_to_image(fig)
-
-    return img, "🔄 **Environment Reset Successfully!**"
+    return fig_to_image(fig), "🔄 Reset successful"
 
 
 # UI
-with gr.Blocks(title="🚗 AI Parking System") as demo:
+with gr.Blocks() as demo:
     gr.Markdown("# 🚗 Hybrid AI Parking System")
-    gr.Markdown("*AI-powered optimal parking spot allocation using Deep Q-Learning*")
 
     with gr.Row():
-        with gr.Column(scale=1):
-            gr.Markdown("### 🎮 Controls")
-            reset_btn = gr.Button("🔄 Reset", size="lg", variant="secondary")
-            step_btn = gr.Button("▶️ Next Step", size="lg", variant="primary")
-        
-        with gr.Column(scale=2):
-           plot_output = gr.Image(type="numpy")  # ✅ FORCE REFRESH
+        with gr.Column():
+            reset_btn = gr.Button("🔄 Reset")
+            step_btn = gr.Button("▶️ Next Step")
 
-    info_output = gr.Markdown(label="Information")
+        with gr.Column():
+            plot_output = gr.Image(type="numpy")
+
+    info_output = gr.Markdown()
 
     reset_btn.click(reset_fn, outputs=[plot_output, info_output])
     step_btn.click(step_fn, outputs=[plot_output, info_output])
 
     demo.load(reset_fn, outputs=[plot_output, info_output])
-
-    gr.Markdown("""
-    ---
-    ### 📊 How it works:
-    1. Click **Reset** to initialize a new parking lot
-    2. Click **Next Step** to let AI assign the best parking spot
-    3. Watch the reward and episode statistics update
-    """)
 
 
 if __name__ == "__main__":
