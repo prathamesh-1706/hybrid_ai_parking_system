@@ -6,6 +6,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import io
 from PIL import Image
+import time
 
 from agent.dqn import DQN
 from env.parking_env import ParkingEnv
@@ -139,6 +140,8 @@ def auto_run_fn():
         img, info = step_fn()
         if img is None:
             break
+
+        time.sleep(0.5)  # ⏱️ ADD DELAY (0.5 seconds)
 
     return img, "⚡ Auto-run completed\n\n" + info
 
