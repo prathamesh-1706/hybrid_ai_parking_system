@@ -152,6 +152,12 @@ with gr.Blocks() as demo:
     gr.Markdown(
         "This system uses Deep Q-Learning to intelligently assign optimal parking slots, reducing congestion and maximizing efficiency."
     )
+    gr.Markdown("""
+### 🎨 Legend
+- 🟩 Empty Slot  
+- 🟥 Occupied Slot  
+- 🔵 Selected Slot (AI Decision)
+""")
 
     with gr.Row():
         # LEFT SIDE → Buttons
