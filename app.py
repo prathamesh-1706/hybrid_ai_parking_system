@@ -61,56 +61,64 @@ def visualize_grid(grid, action=None):
 def step_fn():
     global state, episode_reward, episode_steps
 
-    if model is None:
-        return None, "❌ Model not loaded"
+    try:
+        if model is None:
+            return None, "❌ Model not loaded"
 
-    state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
+        state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
 
-    # Model prediction
-    with torch.no_grad():
-        q_values = model(state_tensor).cpu().numpy().flatten()
+        with torch.no_grad():
+            q_values = model(state_tensor).cpu().numpy().flatten()
 
-    # Fix shape issue
-    valid_actions = (state.flatten() == 0)
+        valid_actions = (state.flatten() == 0)
 
-    # Mask invalid actions
-    masked_q = np.where(valid_actions, q_values, -1e9)
+        if not valid_actions.any():
+            fig = visualize_grid(state)
+            img = fig_to_image(fig)
+            return img, "🚫 No available parking slots!"
 
-    # Edge case: no empty slots
-    if not valid_actions.any():
-        fig = visualize_grid(state)
+        masked_q = np.where(valid_actions, q_values, -1e9)
+        action = np.argmax(masked_q)
+
+        # Try both formats safely
+        step_output = env.step(action)
+
+        print("STEP OUTPUT:", step_output)  # 👈 DEBUG
+
+        if len(step_output) == 5:
+            next_state, reward, done, _, _ = step_output
+        else:
+            next_state, reward, done, _ = step_output
+
+        state = next_state
+        episode_reward += reward
+        episode_steps += 1
+
+        row = action // env.size
+        col = action % env.size
+
+        status = "✅ Success!" if reward > 5 else "⚠️ Occupied or Penalty"
+
+        info = f"""
+        ### 🤖 AI Decision
+        - **Selected Slot**: {action} (Row: {row}, Col: {col})
+        - **Reward**: {reward:.2f}
+        - **Status**: {status}
+        - **Total Reward**: {episode_reward:.2f}
+        - **Steps**: {episode_steps}
+        - **Done**: {"🏁 Yes" if done else "▶️ No"}
+        """
+
+        fig = visualize_grid(state, action)
         img = fig_to_image(fig)
-        return img, "🚫 No available parking slots!"
 
-    # Select action
-    action = np.argmax(masked_q)
+        return img, info
 
-    # ✅ FIX HERE
-    next_state, reward, done, _ = env.step(action)
-
-    state = next_state
-    episode_reward += reward
-    episode_steps += 1
-
-    row = action // env.size
-    col = action % env.size
-
-    status = "✅ Success!" if reward > 5 else "⚠️ Occupied or Penalty"
-
-    info = f"""
-    ### 🤖 AI Decision
-    - **Selected Slot**: {action} (Row: {row}, Col: {col})
-    - **Reward**: {reward:.2f}
-    - **Status**: {status}
-    - **Total Reward**: {episode_reward:.2f}
-    - **Steps**: {episode_steps}
-    - **Done**: {"🏁 Yes" if done else "▶️ No"}
-    """
-
-    fig = visualize_grid(state, action)
-    img = fig_to_image(fig)
-
-    return img, info
+    except Exception as e:
+        import traceback
+        error_msg = traceback.format_exc()
+        print(error_msg)  # 👈 goes to HF logs
+        return None, f"❌ ERROR:\n```\n{error_msg}\n```"
 
 def reset_fn():
     global state, episode_reward, episode_steps
