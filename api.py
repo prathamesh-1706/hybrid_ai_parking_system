@@ -20,6 +20,14 @@ def reset():
     return {"state": state.tolist()}
 
 @app.api_route("/step", methods=["GET", "POST"])
+
+# Root route
+@app.get("/")
+def read_root():
+    return {"message": "Hybrid AI Parking System is running!"}
+
+@app.api_route("/step", methods=["GET", "POST"])
+
 def step():
     global state
 
