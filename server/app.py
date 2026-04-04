@@ -1,3 +1,4 @@
+from ast import main
 import gradio as gr
 import torch
 import numpy as np
@@ -183,3 +184,6 @@ with gr.Blocks() as demo:
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7861, share=True)
+
+if __name__ == "__main__":
+    main()
