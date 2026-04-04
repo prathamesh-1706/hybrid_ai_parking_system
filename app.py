@@ -66,24 +66,28 @@ def step_fn():
 
     state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
 
-    # ✅ Get Q-values from model
-    q_values = model(state_tensor).detach().numpy().flatten()
+    # Model prediction
+    with torch.no_grad():
+        q_values = model(state_tensor).cpu().numpy().flatten()
 
-    # ✅ Mask invalid actions (occupied slots)
-    valid_actions = (state == 0)  # 0 = empty
+    # Fix shape issue
+    valid_actions = (state.flatten() == 0)
+
+    # Mask invalid actions
     masked_q = np.where(valid_actions, q_values, -1e9)
 
-    # ✅ Select best valid action
-    action = np.argmax(masked_q)
-
-    # 🚨 Edge case: no empty slots
+    # Edge case: no empty slots
     if not valid_actions.any():
         fig = visualize_grid(state)
         img = fig_to_image(fig)
         return img, "🚫 No available parking slots!"
 
-    # Step environment
-    next_state, reward, done, _, _ = env.step(action)
+    # Select action
+    action = np.argmax(masked_q)
+
+    # ✅ FIX HERE
+    next_state, reward, done, _ = env.step(action)
+
     state = next_state
     episode_reward += reward
     episode_steps += 1
@@ -107,7 +111,6 @@ def step_fn():
     img = fig_to_image(fig)
 
     return img, info
-
 
 def reset_fn():
     global state, episode_reward, episode_steps
