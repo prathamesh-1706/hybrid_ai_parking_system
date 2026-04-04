@@ -182,4 +182,4 @@ with gr.Blocks() as demo:
     demo.load(reset_fn, outputs=[plot_output, info_output])
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7861)
+    demo.launch(server_name="0.0.0.0", server_port=7861, share=True)
