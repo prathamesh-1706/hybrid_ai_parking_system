@@ -1,21 +1,3 @@
-[build-system]
-requires = ["setuptools>=65", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "hybrid-ai-parking-system"
-version = "1.0.0"
-description = "AI-powered parking management system using Deep Q-Learning"
-readme = "README.md"
-requires-python = ">=3.10"
-license = { text = "MIT" }
-authors = [
-  { name = "Prathamesh Sharma", email = "prathameshsharma@example.com" }
-]
-
-[project.scripts]
-server = "server.app:main"
-
 dependencies = [
   "numpy>=1.24.0,<2.0",
   "torch>=2.1.0",
@@ -32,33 +14,10 @@ dependencies = [
   "streamlit>=1.28.0",
   "requests>=2.31.0",
   "pyyaml>=6.0",
-  "pillow>=10.0.0"
+  "pillow>=10.0.0",
   "openenv-core>=0.2.0"
 ]
 
-[project.optional-dependencies]
-dev = [
-  "pytest>=7.4.0",
-  "pytest-cov>=4.1.0",
-  "black>=23.10.0",
-  "flake8>=6.1.0",
-  "mypy>=1.6.0"
-]
-
-[project.urls]
-Homepage = "https://github.com/prathameshsharma/hybrid-ai-parking-system"
-Repository = "https://github.com/prathameshsharma/hybrid-ai-parking-system.git"
-Issues = "https://github.com/prathameshsharma/hybrid-ai-parking-system/issues"
-
-[tool.black]
-line-length = 100
-target-version = ['py310', 'py311']
-
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = "test_*.py"
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agent*", "server*"]
