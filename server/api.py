@@ -5,7 +5,7 @@ from agent.dqn import DQN
 from env.parking_env import ParkingEnv
 from server.app import reset_fn, step_fn  # import your functions
 from fastapi.responses import JSONResponse
-from app import reset_fn, step_fn  # import your functions
+from server.app import reset_fn, step_fn
 
 app = FastAPI()
 
