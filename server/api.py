@@ -5,19 +5,21 @@ from agent.dqn import DQN
 from env.parking_env import ParkingEnv
 from server.app import reset_fn, step_fn  # import your functions
 from fastapi.responses import JSONResponse
+from app import reset_fn, step_fn  # import your functions
 
 app = FastAPI()
 
 
 @app.post("/reset")
+@app.post("/reset")
 def reset():
     img, info = reset_fn()
-    return JSONResponse({"info": info})
+    return {"image_shape": img.shape if img is not None else None, "info": info}
 
 @app.post("/step")
 def step():
     img, info = step_fn()
-    return JSONResponse({"info": info})
+    return {"image_shape": img.shape if img is not None else None, "info": info}
 
 env = ParkingEnv(size=4)
 model = DQN(16, env.action_space.n)
