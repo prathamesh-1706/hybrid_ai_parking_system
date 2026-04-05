@@ -8,6 +8,24 @@ import matplotlib.pyplot as plt
 import io
 from PIL import Image
 import time
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+
+app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+@app.post("/reset")
+def reset_endpoint():
+    img, info = reset_fn()
+    return {"info": info}
+
+@app.post("/step")
+def step_endpoint():
+    img, info = step_fn()
+    return {"info": info}
+    allow_headers=["*"],
+
 
 from agent.dqn import DQN
 from env.parking_env import ParkingEnv

@@ -21,3 +21,6 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["agent*", "server*"]
+
+[project.scripts]
+server = "server.app:main"
